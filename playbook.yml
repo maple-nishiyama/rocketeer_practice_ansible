@@ -40,3 +40,7 @@
     - name: install Composer
       action: shell php -r "readfile('https://getcomposer.org/installer');"  | sudo php -- --install-dir=/usr/local/bin --filename=composer
       when: has_composer|failed
+
+    # Vim
+    - name: install Vim
+      yum: name=vim state=present
