@@ -1,0 +1,42 @@
+- name: settings for Rocketeer
+  hosts: all
+  user: vagrant
+  sudo: yes
+  vars:
+    github_key: ~/.ssh/github_rsa
+
+  tasks:
+    # remi repository
+    - name: add repository 'remi-repo'
+      yum: name=http://rpms.famillecollet.com/enterprise/remi-release-6.rpm state=present
+
+    # PHP
+    - name: install PHP
+      yum: name={{ item }} enablerepo=remi,remi-php55 state=present
+      with_items:
+        - php
+        - php-mcrypt
+
+    # PHP timezone
+    - name: Set PHP timezone Asia/Tokyo
+      lineinfile: dest=/etc/php.ini regexp='^;date.timezone=' line='date.timezone=Asia/Tokyo'
+
+    # Git
+    - name: install Git
+      yum: name=git
+
+    - name: copy Git ssh key
+      copy: src={{ github_key }} dest=/home/vagrant/.ssh/github_rsa owner=vagrant group=vagrant mode=0600
+
+    - name: copy ssh config
+      copy: src=./config dest=/home/vagrant/.ssh/config owner=vagrant group=vagrant mode=0600
+
+    # Composer
+    - name: Check if Composer installed.
+      shell: test -x /usr/local/bin/composer
+      register: has_composer
+      ignore_errors: true
+
+    - name: install Composer
+      action: shell php -r "readfile('https://getcomposer.org/installer');"  | sudo php -- --install-dir=/usr/local/bin --filename=composer
+      when: has_composer|failed
